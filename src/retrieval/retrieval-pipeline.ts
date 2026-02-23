@@ -12,8 +12,14 @@ export interface QueryParams {
   query: string;
   limit: number;
   filter?: {
+    /** Filter to documents whose URI starts with this prefix */
     docUriPrefix?: string;
+    /** Filter to specific document URIs (exact match) */
+    docUris?: string[];
+    /** Filter to headings whose path starts with this prefix */
     headingPathPrefix?: string;
+    /** Filter to headings whose path contains this substring (case-insensitive) */
+    headingPathContains?: string;
   };
 }
 
@@ -100,13 +106,7 @@ export class RetrievalPipeline {
       if (!metadata) continue;
 
       // Apply filters
-      if (params.filter?.docUriPrefix && !metadata.docUri.startsWith(params.filter.docUriPrefix)) {
-        continue;
-      }
-      if (
-        params.filter?.headingPathPrefix &&
-        !metadata.headingPath.startsWith(params.filter.headingPathPrefix)
-      ) {
+      if (!this.matchesFilters(metadata, params.filter)) {
         continue;
       }
 
@@ -157,6 +157,45 @@ export class RetrievalPipeline {
       results,
       meta: { tookMs: Date.now() - startTime },
     };
+  }
+
+  /**
+   * Check if metadata matches all provided filters.
+   * All filters are AND-ed together (all must match).
+   */
+  private matchesFilters(
+    metadata: LeafMetadata,
+    filter: QueryParams['filter']
+  ): boolean {
+    if (!filter) return true;
+
+    // docUriPrefix: document URI must start with prefix
+    if (filter.docUriPrefix && !metadata.docUri.startsWith(filter.docUriPrefix)) {
+      return false;
+    }
+
+    // docUris: document URI must be in the list (exact match)
+    if (filter.docUris && filter.docUris.length > 0) {
+      if (!filter.docUris.includes(metadata.docUri)) {
+        return false;
+      }
+    }
+
+    // headingPathPrefix: heading path must start with prefix
+    if (filter.headingPathPrefix && !metadata.headingPath.startsWith(filter.headingPathPrefix)) {
+      return false;
+    }
+
+    // headingPathContains: heading path must contain substring (case-insensitive)
+    if (filter.headingPathContains) {
+      const lowerHeadingPath = metadata.headingPath.toLowerCase();
+      const lowerContains = filter.headingPathContains.toLowerCase();
+      if (!lowerHeadingPath.includes(lowerContains)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

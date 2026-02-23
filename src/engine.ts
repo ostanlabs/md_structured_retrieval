@@ -41,8 +41,13 @@ export interface EngineQueryParams {
   topK?: number;
   maxExcerptChars?: number;
   filters?: {
+    /** Filter to documents whose URI starts with this prefix */
     docUriPrefix?: string;
+    /** Filter to specific document URIs (exact match) */
     docUris?: string[];
+    /** Filter to headings whose path starts with this prefix */
+    headingPathPrefix?: string;
+    /** Filter to headings whose path contains this substring (case-insensitive) */
     headingPathContains?: string;
   };
   debug?: {
@@ -248,7 +253,9 @@ export class MsrlEngine {
       filter: params.filters
         ? {
             docUriPrefix: params.filters.docUriPrefix,
-            headingPathPrefix: params.filters.headingPathContains,
+            docUris: params.filters.docUris,
+            headingPathPrefix: params.filters.headingPathPrefix,
+            headingPathContains: params.filters.headingPathContains,
           }
         : undefined,
     });
