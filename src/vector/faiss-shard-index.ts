@@ -104,8 +104,8 @@ export class FaissShardIndex implements VectorIndex {
         throw new Error(`Vector dimension (${vector.length}) must be ${this.config.dimension}`);
       }
 
-      // Add to FAISS
-      this.index.add(vector);
+      // Add to FAISS (faiss-node requires regular array, not Float32Array)
+      this.index.add(Array.from(vector));
 
       // Track ID mapping
       const faissId = this.nextId++;
@@ -126,7 +126,8 @@ export class FaissShardIndex implements VectorIndex {
     }
 
     const k = Math.min(topK, this.size);
-    const result = this.index.search(query, k);
+    // faiss-node requires regular array, not Float32Array
+    const result = this.index.search(Array.from(query), k);
 
     const results: VectorSearchResult[] = [];
     for (let i = 0; i < result.labels.length; i++) {

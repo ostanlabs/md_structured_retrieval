@@ -91,8 +91,7 @@ describe('FaissShardIndex', () => {
   });
 
   // Integration tests that require faiss-node
-  // These are skipped by default and can be enabled when faiss-node is available
-  describe.skip('with faiss-node (integration)', () => {
+  describe('with faiss-node (integration)', () => {
     let tempDir: string;
     let index: FaissShardIndex;
 
@@ -108,7 +107,17 @@ describe('FaissShardIndex', () => {
     it('should add vectors and search', async () => {
       await index.initialize();
 
-      // Create random vectors
+      // Helper to normalize a vector (required for cosine similarity via inner product)
+      const normalize = (v: Float32Array): Float32Array => {
+        let norm = 0;
+        for (let i = 0; i < v.length; i++) norm += v[i]! * v[i]!;
+        norm = Math.sqrt(norm);
+        const result = new Float32Array(v.length);
+        for (let i = 0; i < v.length; i++) result[i] = v[i]! / norm;
+        return result;
+      };
+
+      // Create random normalized vectors
       const vectors: Float32Array[] = [];
       const ids: string[] = [];
       for (let i = 0; i < 100; i++) {
@@ -116,7 +125,7 @@ describe('FaissShardIndex', () => {
         for (let j = 0; j < 1024; j++) {
           v[j] = Math.random();
         }
-        vectors.push(v);
+        vectors.push(normalize(v));
         ids.push(`leaf_${i}`);
       }
 
@@ -130,7 +139,7 @@ describe('FaissShardIndex', () => {
 
       expect(results.length).toBe(5);
       expect(results[0]!.id).toBe('leaf_0'); // Should find itself
-      expect(results[0]!.score).toBeCloseTo(1.0, 2); // Self-similarity
+      expect(results[0]!.score).toBeCloseTo(1.0, 2); // Self-similarity (normalized vectors)
     });
 
     it('should save and load index', async () => {

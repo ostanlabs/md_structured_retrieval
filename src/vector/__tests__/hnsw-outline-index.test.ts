@@ -76,7 +76,7 @@ describe('HnswOutlineIndex', () => {
   });
 
   // Integration tests that require faiss-node
-  describe.skip('with faiss-node (integration)', () => {
+  describe('with faiss-node (integration)', () => {
     let tempDir: string;
     let index: HnswOutlineIndex;
 
