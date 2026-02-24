@@ -2,7 +2,7 @@
  * HnswOutlineIndex Tests
  *
  * TDD: These tests define the expected behavior of the HNSW outline index.
- * Note: Integration tests require faiss-node to be installed.
+ * Note: Integration tests require faiss-node to be installed and properly built.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -14,6 +14,15 @@ import {
   DEFAULT_HNSW_CONFIG,
 } from '../hnsw-outline-index.js';
 import type { VectorSearchResult } from '../vector-index.js';
+
+// Check if faiss-node is available (native module may not be built on all platforms)
+let hasFaissNode = false;
+try {
+  require('faiss-node');
+  hasFaissNode = true;
+} catch {
+  // faiss-node not available or native module not built
+}
 
 describe('DEFAULT_HNSW_CONFIG', () => {
   it('should have correct dimension', () => {
@@ -75,8 +84,8 @@ describe('HnswOutlineIndex', () => {
     });
   });
 
-  // Integration tests that require faiss-node
-  describe('with faiss-node (integration)', () => {
+  // Integration tests that require faiss-node (skip if native module not available)
+  describe.skipIf(!hasFaissNode)('with faiss-node (integration)', () => {
     let tempDir: string;
     let index: HnswOutlineIndex;
 
